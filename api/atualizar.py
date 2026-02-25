@@ -22,6 +22,13 @@ API_BASE   = f"{MANTIS_URL}/api/rest"
 
 @app.route("/api/atualizar", methods=["POST"])
 def atualizar():
+    # Valida senha da aplicação
+    app_password = os.environ.get("APP_PASSWORD", "")
+    if app_password:
+        senha_enviada = request.headers.get("X-App-Password", "")
+        if senha_enviada != app_password:
+            return jsonify({"erro": "Não autorizado."}), 401
+
     api_token = os.environ.get("MANTIS_API_TOKEN", "")
     if not api_token:
         return jsonify({"erro": "MANTIS_API_TOKEN não está configurado no servidor."}), 500

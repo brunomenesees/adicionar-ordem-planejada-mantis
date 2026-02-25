@@ -194,6 +194,55 @@
       display: none;
     }
 
+    /* Password screen */
+    .password-screen {
+      position: fixed;
+      inset: 0;
+      background: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 24px;
+    }
+    .password-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      padding: 40px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+    .password-card h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #0f172a;
+    }
+    .password-card p {
+      font-size: .875rem;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+    .password-input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color .2s;
+      margin-bottom: 12px;
+    }
+    .password-input:focus { border-color: #3b82f6; }
+    .password-error {
+      font-size: .8rem;
+      color: #991b1b;
+      margin-bottom: 10px;
+      min-height: 18px;
+    }
+
     /* CSV hint */
     .hint {
       margin-top: 14px;
@@ -208,10 +257,22 @@
       font-family: 'Consolas', monospace;
       color: #475569;
     }
-  </style>
+</style>
 </head>
 <body>
-<div class="card">
+
+<!-- Tela de senha -->
+<div class="password-screen" id="passwordScreen">
+  <div class="password-card">
+    <h2>Acesso Restrito</h2>
+    <p>Digite a senha para continuar.</p>
+    <input type="password" class="password-input" id="passwordInput" placeholder="Senha" />
+    <p class="password-error" id="passwordError"></p>
+    <button class="btn" id="passwordBtn">Entrar</button>
+  </div>
+</div>
+
+<div class="card" id="mainCard" style="display:none">
   <h1>Atualizar Ordem de Planejamento</h1>
   <p class="subtitle">Envie um CSV para atualizar a ordem de planejamento de cada Mantis.</p>
 
@@ -272,12 +333,58 @@
 </div>
 
 <script>
-  const csvInput   = document.getElementById('csvInput');
-  const dropArea   = document.getElementById('dropArea');
-  const fileName   = document.getElementById('fileName');
-  const enviarBtn  = document.getElementById('enviarBtn');
-  const progressWrap = document.getElementById('progressWrap');
-  const errorBox   = document.getElementById('errorBox');
+  // ── Auth ──────────────────────────────────────────────
+  const passwordScreen = document.getElementById('passwordScreen');
+  const mainCard       = document.getElementById('mainCard');
+  const passwordInput  = document.getElementById('passwordInput');
+  const passwordBtn    = document.getElementById('passwordBtn');
+  const passwordError  = document.getElementById('passwordError');
+
+  // Se já autenticou nesta sessão, exibe direto
+  if (sessionStorage.getItem('auth') === '1') {
+    passwordScreen.style.display = 'none';
+    mainCard.style.display = 'block';
+  }
+
+  async function tentarLogin() {
+    const senha = passwordInput.value.trim();
+    if (!senha) return;
+    passwordBtn.disabled = true;
+    passwordError.textContent = '';
+
+    try {
+      const r = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ senha })
+      });
+      const data = await r.json();
+      if (data.ok) {
+        sessionStorage.setItem('auth', '1');
+        sessionStorage.setItem('pwd', senha);
+        passwordScreen.style.display = 'none';
+        mainCard.style.display = 'block';
+      } else {
+        passwordError.textContent = '\u26a0 Senha incorreta.';
+        passwordInput.value = '';
+        passwordInput.focus();
+      }
+    } catch (e) {
+      passwordError.textContent = '\u26a0 Erro de conexão.';
+    }
+    passwordBtn.disabled = false;
+  }
+
+  passwordBtn.addEventListener('click', tentarLogin);
+  passwordInput.addEventListener('keydown', e => { if (e.key === 'Enter') tentarLogin(); });
+
+  // ── App ───────────────────────────────────────────────
+  const csvInput       = document.getElementById('csvInput');
+  const dropArea       = document.getElementById('dropArea');
+  const fileName       = document.getElementById('fileName');
+  const enviarBtn      = document.getElementById('enviarBtn');
+  const progressWrap   = document.getElementById('progressWrap');
+  const errorBox       = document.getElementById('errorBox');
   const resultadosArea = document.getElementById('resultadosArea');
 
   // Drag & drop visual feedback
@@ -314,14 +421,25 @@
     formData.append('csv', file);
 
     try {
-      const resp = await fetch('/api/atualizar', { method: 'POST', body: formData });
+      const resp = await fetch('/api/atualizar', {
+        method: 'POST',
+        headers: { 'X-App-Password': sessionStorage.getItem('pwd') || '' },
+        body: formData
+      });
       const data = await resp.json();
 
       progressWrap.style.display = 'none';
       enviarBtn.disabled = false;
 
+      if (resp.status === 401) {
+        sessionStorage.removeItem('auth');
+        sessionStorage.removeItem('pwd');
+        location.reload();
+        return;
+      }
+
       if (data.erro) {
-        errorBox.textContent = '⚠ ' + data.erro;
+        errorBox.textContent = '\u26a0 ' + data.erro;
         errorBox.style.display = 'block';
         return;
       }
@@ -350,7 +468,7 @@
     } catch (err) {
       progressWrap.style.display = 'none';
       enviarBtn.disabled = false;
-      errorBox.textContent = '⚠ Erro de conexão: ' + err.message;
+      errorBox.textContent = '\u26a0 Erro de conexão: ' + err.message;
       errorBox.style.display = 'block';
     }
   });
