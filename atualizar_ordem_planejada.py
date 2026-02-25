@@ -85,7 +85,7 @@ def atualizar_campo_customizado(id_issue: str, ordem: str) -> bool:
     }
 
     try:
-        response = requests.patch(url, json=payload, headers=HEADERS, timeout=15)
+        response = requests.post(url, json=payload, headers=HEADERS, timeout=15)
 
         if response.status_code in (200, 201, 204):
             return True

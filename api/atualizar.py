@@ -82,7 +82,7 @@ def atualizar():
             }
 
             try:
-                resp = requests.patch(
+                resp = requests.post(
                     f"{API_BASE}/issues/{id_issue}",
                     json=payload,
                     headers=headers_api,
