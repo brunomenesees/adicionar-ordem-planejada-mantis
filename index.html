@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ordem Planejada — Mantis</title>
+  <title>Atualizar Ordem de Planejamento</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -212,8 +212,8 @@
 </head>
 <body>
 <div class="card">
-  <h1>Ordem Planejada — Mantis</h1>
-  <p class="subtitle">Envie um CSV para atualizar o campo <strong>Ordem_Plnj</strong> de cada issue.</p>
+  <h1>Atualizar Ordem de Planejamento</h1>
+  <p class="subtitle">Envie um CSV para atualizar a ordem de planejamento de cada Mantis.</p>
 
   <div class="drop-area" id="dropArea">
     <input type="file" id="csvInput" accept=".csv" />
@@ -223,8 +223,8 @@
   </div>
 
   <p class="hint">
-    O CSV deve usar <code>;</code> como separador e conter as colunas
-    <code>Mantis</code> e <code>Ordem Planejada</code>.
+    O CSV deve conter as colunas <code>Mantis</code> e <code>Ordem Planejada</code>.
+    Separador <code>;</code> ou <code>,</code> — ambos são aceitos.
   </p>
 
   <button class="btn" id="enviarBtn" disabled>Enviar e Atualizar</button>

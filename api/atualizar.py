@@ -33,14 +33,19 @@ def atualizar():
 
     try:
         content = file.stream.read().decode("utf-8-sig")
-        reader  = csv.DictReader(io.StringIO(content), delimiter=";")
+
+        # Detecta separador automaticamente (;  ou  ,)
+        amostra   = content[:2048]
+        delimiter = ";" if amostra.count(";") >= amostra.count(",") else ","
+
+        reader  = csv.DictReader(io.StringIO(content), delimiter=delimiter)
         colunas = reader.fieldnames or []
 
         if "Mantis" not in colunas or "Ordem Planejada" not in colunas:
             return jsonify({
                 "erro": (
                     f"Colunas inválidas. Encontradas: {colunas}. "
-                    "O CSV deve ter as colunas 'Mantis' e 'Ordem Planejada' separadas por ';'."
+                    "O CSV deve ter as colunas 'Mantis' e 'Ordem Planejada' (separador ',' ou ';')."
                 )
             }), 400
 

@@ -39,7 +39,10 @@ def ler_csv(caminho: str) -> list[dict]:
         sys.exit(1)
 
     with open(caminho, newline="", encoding="utf-8-sig") as f:
-        reader = csv.DictReader(f, delimiter=";")
+        amostra   = f.read(2048)
+        delimiter = ";" if amostra.count(";") >= amostra.count(",") else ","
+        f.seek(0)
+        reader = csv.DictReader(f, delimiter=delimiter)
 
         # Valida colunas obrigatórias
         colunas = reader.fieldnames or []
