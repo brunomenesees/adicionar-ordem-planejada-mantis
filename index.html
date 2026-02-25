@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ordem Planejada — Mantis</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      padding: 40px;
+      width: 100%;
+      max-width: 640px;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: .875rem;
+      color: #64748b;
+      margin-bottom: 32px;
+    }
+
+    /* Upload area */
+    .drop-area {
+      border: 2px dashed #cbd5e1;
+      border-radius: 8px;
+      padding: 36px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      position: relative;
+    }
+    .drop-area:hover, .drop-area.over {
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+    .drop-area input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .drop-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .drop-label { font-size: .95rem; color: #475569; }
+    .drop-label span { color: #3b82f6; font-weight: 600; }
+    .file-name {
+      margin-top: 10px;
+      font-size: .85rem;
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    /* Button */
+    .btn {
+      display: block;
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      background: #3b82f6;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .btn:hover:not(:disabled) { background: #2563eb; }
+    .btn:disabled { background: #93c5fd; cursor: not-allowed; }
+
+    /* Progress */
+    .progress-wrap {
+      margin-top: 20px;
+      display: none;
+    }
+    .progress-bar-bg {
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: #3b82f6;
+      width: 0%;
+      border-radius: 99px;
+      transition: width .3s;
+      animation: indeterminate 1.2s linear infinite;
+    }
+    @keyframes indeterminate {
+      0%   { transform: translateX(-100%) scaleX(.4); }
+      100% { transform: translateX(250%) scaleX(.4); }
+    }
+    .progress-text {
+      font-size: .8rem;
+      color: #64748b;
+      margin-top: 6px;
+      text-align: center;
+    }
+
+    /* Summary badges */
+    .summary {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      flex: 1;
+      min-width: 100px;
+      border-radius: 8px;
+      padding: 12px 16px;
+      text-align: center;
+    }
+    .badge-num  { font-size: 1.6rem; font-weight: 700; }
+    .badge-lbl  { font-size: .78rem; margin-top: 2px; }
+    .badge-total   { background: #f1f5f9; }
+    .badge-sucesso { background: #dcfce7; color: #166534; }
+    .badge-falha   { background: #fee2e2; color: #991b1b; }
+    .badge-ignore  { background: #fef9c3; color: #854d0e; }
+
+    /* Results table */
+    .results-wrap {
+      margin-top: 20px;
+      max-height: 320px;
+      overflow-y: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+    }
+    thead th {
+      background: #f8fafc;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      color: #475569;
+      position: sticky;
+      top: 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    tbody td {
+      padding: 9px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #1e293b;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .status-pill {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 99px;
+      font-size: .78rem;
+      font-weight: 600;
+    }
+    .pill-sucesso  { background: #dcfce7; color: #166534; }
+    .pill-falha    { background: #fee2e2; color: #991b1b; }
+    .pill-erro     { background: #fee2e2; color: #991b1b; }
+    .pill-ignorado { background: #fef9c3; color: #854d0e; }
+
+    /* Error box */
+    .error-box {
+      margin-top: 16px;
+      background: #fee2e2;
+      color: #991b1b;
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: .875rem;
+      display: none;
+    }
+
+    /* CSV hint */
+    .hint {
+      margin-top: 14px;
+      font-size: .78rem;
+      color: #94a3b8;
+      text-align: center;
+    }
+    code {
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: 'Consolas', monospace;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>Ordem Planejada — Mantis</h1>
+  <p class="subtitle">Envie um CSV para atualizar o campo <strong>Ordem_Plnj</strong> de cada issue.</p>
+
+  <div class="drop-area" id="dropArea">
+    <input type="file" id="csvInput" accept=".csv" />
+    <div class="drop-icon">📄</div>
+    <p class="drop-label">Arraste o CSV aqui ou <span>clique para selecionar</span></p>
+    <p class="file-name" id="fileName"></p>
+  </div>
+
+  <p class="hint">
+    O CSV deve usar <code>;</code> como separador e conter as colunas
+    <code>Mantis</code> e <code>Ordem Planejada</code>.
+  </p>
+
+  <button class="btn" id="enviarBtn" disabled>Enviar e Atualizar</button>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-bar-bg"><div class="progress-bar" id="progressBar"></div></div>
+    <p class="progress-text" id="progressText">Processando…</p>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div id="resultadosArea" style="display:none">
+    <div class="summary">
+      <div class="badge badge-total">
+        <div class="badge-num" id="bTotal">0</div>
+        <div class="badge-lbl">Total</div>
+      </div>
+      <div class="badge badge-sucesso">
+        <div class="badge-num" id="bSucesso">0</div>
+        <div class="badge-lbl">Sucesso</div>
+      </div>
+      <div class="badge badge-falha">
+        <div class="badge-num" id="bFalha">0</div>
+        <div class="badge-lbl">Falha</div>
+      </div>
+      <div class="badge badge-ignore">
+        <div class="badge-num" id="bIgnorado">0</div>
+        <div class="badge-lbl">Ignorado</div>
+      </div>
+    </div>
+
+    <div class="results-wrap" id="tabelaWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Issue #</th>
+            <th>Status</th>
+            <th>Mensagem</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  const csvInput   = document.getElementById('csvInput');
+  const dropArea   = document.getElementById('dropArea');
+  const fileName   = document.getElementById('fileName');
+  const enviarBtn  = document.getElementById('enviarBtn');
+  const progressWrap = document.getElementById('progressWrap');
+  const errorBox   = document.getElementById('errorBox');
+  const resultadosArea = document.getElementById('resultadosArea');
+
+  // Drag & drop visual feedback
+  dropArea.addEventListener('dragover',  e => { e.preventDefault(); dropArea.classList.add('over'); });
+  dropArea.addEventListener('dragleave', () => dropArea.classList.remove('over'));
+  dropArea.addEventListener('drop', e => {
+    e.preventDefault();
+    dropArea.classList.remove('over');
+    const files = e.dataTransfer.files;
+    if (files.length) { csvInput.files = files; onFileSelected(); }
+  });
+
+  csvInput.addEventListener('change', onFileSelected);
+
+  function onFileSelected() {
+    const f = csvInput.files[0];
+    if (f) {
+      fileName.textContent = f.name;
+      enviarBtn.disabled = false;
+    }
+  }
+
+  enviarBtn.addEventListener('click', async () => {
+    const file = csvInput.files[0];
+    if (!file) return;
+
+    // Reset UI
+    errorBox.style.display = 'none';
+    resultadosArea.style.display = 'none';
+    progressWrap.style.display = 'block';
+    enviarBtn.disabled = true;
+
+    const formData = new FormData();
+    formData.append('csv', file);
+
+    try {
+      const resp = await fetch('/api/atualizar', { method: 'POST', body: formData });
+      const data = await resp.json();
+
+      progressWrap.style.display = 'none';
+      enviarBtn.disabled = false;
+
+      if (data.erro) {
+        errorBox.textContent = '⚠ ' + data.erro;
+        errorBox.style.display = 'block';
+        return;
+      }
+
+      // Preenche badges
+      document.getElementById('bTotal').textContent    = data.total;
+      document.getElementById('bSucesso').textContent  = data.sucesso;
+      document.getElementById('bFalha').textContent    = data.falha;
+      document.getElementById('bIgnorado').textContent = data.ignorado;
+
+      // Preenche tabela
+      const tbody = document.getElementById('tabelaBody');
+      tbody.innerHTML = '';
+      for (const r of data.resultados) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>#${r.issue}</td>
+          <td><span class="status-pill pill-${r.status}">${r.status}</span></td>
+          <td>${r.mensagem}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      resultadosArea.style.display = 'block';
+
+    } catch (err) {
+      progressWrap.style.display = 'none';
+      enviarBtn.disabled = false;
+      errorBox.textContent = '⚠ Erro de conexão: ' + err.message;
+      errorBox.style.display = 'block';
+    }
+  });
+</script>
+</body>
+</html>
