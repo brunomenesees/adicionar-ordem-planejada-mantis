@@ -17,7 +17,7 @@ from datetime import datetime
 # ─────────────────────────────────────────────
 #  CONFIGURAÇÕES — altere conforme necessário
 # ─────────────────────────────────────────────
-MANTIS_URL  = "https://mantis.xcelis.com.br"      # URL base do servidor Mantis
+MANTIS_URL  = "https://mantis.xcelis.com.br/mantis"      # URL base do servidor Mantis
 API_TOKEN   = "SEU_TOKEN_AQUI"                                         # Token de API do Mantis
 CSV_FILE    = "ordens.csv"                         # Caminho do arquivo CSV
 CAMPO_NOME  = "Ordem_Plnj"                         # Nome exato do campo customizado
@@ -85,7 +85,7 @@ def atualizar_campo_customizado(id_issue: str, ordem: str) -> bool:
     }
 
     try:
-        response = requests.post(url, json=payload, headers=HEADERS, timeout=15)
+        response = requests.patch(url, json=payload, headers=HEADERS, timeout=15)
 
         if response.status_code in (200, 201, 204):
             return True

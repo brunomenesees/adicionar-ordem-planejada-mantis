@@ -15,7 +15,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-MANTIS_URL = "https://mantis.xcelis.com.br"
+MANTIS_URL = "https://mantis.xcelis.com.br/mantis"
 CAMPO_NOME = "Ordem_Plnj"
 API_BASE   = f"{MANTIS_URL}/api/rest"
 
@@ -82,7 +82,7 @@ def atualizar():
             }
 
             try:
-                resp = requests.post(
+                resp = requests.patch(
                     f"{API_BASE}/issues/{id_issue}",
                     json=payload,
                     headers=headers_api,
